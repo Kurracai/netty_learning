@@ -1,0 +1,16 @@
+{
+    "java.project.referencedLibraries": {
+        "include": [
+            "lib/**/*.jar",
+            "netty\\lib\\netty\\netty-all-5.0.0.Alpha1.jar",
+            "timeserver\\lib\\netty\\netty-all-5.0.0.Alpha1.jar"
+        ],
+        "exclude": [
+            "netty/lib/netty/netty-all-5.0.0.Alpha1.jar"
+        ]
+    },
+    "java.project.sourcePaths": [
+        "timeserver\\src",
+        "timeserver\\bin"
+    ]
+}
