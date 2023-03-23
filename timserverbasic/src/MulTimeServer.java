@@ -27,7 +27,6 @@ public class MulTimeServer implements Runnable{
     private ServerSocketChannel serverSocketChannel;
     //服务端Channel
     private volatile boolean stop;
-    //这个volatile干啥用的？
     public MulTimeServer(){
 
     }
@@ -41,7 +40,7 @@ public class MulTimeServer implements Runnable{
             serverSocketChannel.configureBlocking(false);
             //获取与该Channel实例关联的ServerSocket对象，并绑定接口
             serverSocketChannel.socket().bind(new InetSocketAddress(port),1024);
-            //注册到多路选择器
+            //注册到多路选择器,SelectionKey.OP_ACCEPT：相当于指定该Channel感兴趣的消息类型。比如这里如果是OP_ACCEPT就会激活Selector抓取
             serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
             System.out.println("timeserver正在监听端口："+port);
         } catch (IOException e) {
@@ -69,6 +68,18 @@ public class MulTimeServer implements Runnable{
                 {
                     key=iterator.next();
                     iterator.remove();
+                    try{
+                    handleInput(key);}
+                    catch(Exception e){
+                    if(key!=null)
+                    {
+                        key.cancel();
+                        if(key.channel()!=null)
+                        {
+                            key.channel().close();
+                        }
+                    }
+                }
                 }
 
             } catch (IOException e) {
@@ -89,20 +100,43 @@ public class MulTimeServer implements Runnable{
             socketChannel.configureBlocking(false);
             socketChannel.register(selector, SelectionKey.OP_READ);
         }
-        //当前通道就绪状态为可读
+        //isReadable()当前通道就绪状态为可读
         if(key.isReadable())
         {
             //获取存在可读信息的与客户端连接通道
             SocketChannel socketChannel=(SocketChannel)key.channel();
             //创建缓冲区并分配空间
             ByteBuffer readBuffer=ByteBuffer.allocate(1024);
-            
             //绑定缓冲区与连接通道
             int len=socketChannel.read(readBuffer);
             if(len>0)
             {
                 readBuffer.flip();
+                byte[] bytes=new byte[readBuffer.remaining()];
+                readBuffer.get(bytes);
+                String body=new String(bytes,"UTF-8");
+                System.out.println("接收到来自客户端的数据"+body);
+                String currentTime="QUERY TIME ORDER".equalsIgnoreCase(body)?
+                new java.util.Date(System.currentTimeMillis()).toString():"wrong order";
+                doWrite(socketChannel,currentTime);
             }
+            else if(len<0)
+            {
+                key.cancel();
+                socketChannel.close();
+            }
+        }
+    }
+    private void doWrite(SocketChannel sc,String response) throws IOException
+    {
+        if(response!=null&&response.trim().length()>0)
+        {
+            byte[] bytes=response.getBytes();
+            ByteBuffer writeBuffer=ByteBuffer.allocate(bytes.length);
+            writeBuffer.put(bytes);
+            //使用flip
+            writeBuffer.flip();
+            sc.write(writeBuffer);
         }
     }
 

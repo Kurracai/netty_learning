@@ -85,6 +85,21 @@ Selector是JavaNIO的基础，提供选择已就绪的任务的能力（会轮�
 
 用于NIO的缓冲区操作，所有的通道Channel都是将数据写入到Buffer中来操作，而ByteBuffer是Buffer中改动一种，作为字节缓冲区。与此同时，由于ByteBuffer本身适用于网络通信，所以他与其他Buffer结构不太相同.
 
+mark/limit/position/capacity
+
+**初始分配内存：**
+
+![初始](1679471580396.png)
+
+![写入数据](1679471530811.png)
+
 #### 方法
 
-- flip()：将缓冲区从写模式切换到读模式。在使用ByteBuffer写数据时会把数据放到缓冲区末尾，并且将position（一个指针）
+- flip()：position回到0，limit变为之前的position
+- clear()：清空缓存区回到初始分配状态
+- mark()：将mark数值标注到当前position位置
+- rewind()：重置mark与position数值
+- reset()：将position位置定位到mark。
+- hasRemaining()：比较position与limit大小
+- get(byte[])：读取数据
+- put(byte[])：写入数据
